@@ -88,3 +88,21 @@ async def create_item_final(message: Message, state: FSMContext):
     await message.answer('Спасибо за создание товара')
     await rq.set_item(data["name"], data["discr"], data["price"], data["category"])
     await state.clear()
+
+
+@router.message(F.text == 'Каталог')
+async def catalog(message: Message):
+    await message.answer('Выберете категорию товара', reply_markup=await kb.categories())
+
+
+@router.callback_query(F.data.startswith('category_'))
+async def category(callback: CallbackQuery):
+    await callback.answer('Вы выбрали категорию')
+    await callback.message.answer('Выберете товар по категории', reply_markup=await kb.item_by_category(callback.data.split('_')[1]))
+
+
+@router.callback_query(F.data.startswith('item_'))
+async def category(callback: CallbackQuery):
+    item_data = await rq.get_item(callback.data.split('_')[1])
+    await callback.answer('')
+    await callback.message.answer(f'Вы выбрали товар: {item_data.name}\nОписание: {item_data.description}\nЦена: {item_data.price}$')
