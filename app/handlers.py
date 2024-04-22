@@ -3,9 +3,11 @@ from aiogram.filters import CommandStart, Command
 from aiogram.types import Message, CallbackQuery
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.fsm.context import FSMContext
+from tabulate import tabulate
 
 import app.keyboards as kb
 import app.database.requests as rq
+from bot import bot
 
 
 router = Router()
@@ -25,12 +27,7 @@ class Creat_item(StatesGroup):
 @router.message(CommandStart())
 async def start(message: Message):
     await rq.set_user(message.from_user.id)
-    await message.answer(f'Привет, {message.from_user.full_name}! Добро пожаловать в магазин!')
-
-
-@router.message(Command('shop'))
-async def shop(message: Message):
-    await message.answer('Что вам нужно?', reply_markup=kb.start)
+    await message.answer(f'Привет, {message.from_user.full_name}! Добро пожаловать в магазин!', reply_markup=kb.start)
 
 
 @router.message(F.text == 'Создать')
@@ -102,7 +99,42 @@ async def category(callback: CallbackQuery):
 
 
 @router.callback_query(F.data.startswith('item_'))
-async def category(callback: CallbackQuery):
+async def item(callback: CallbackQuery):
     item_data = await rq.get_item(callback.data.split('_')[1])
     await callback.answer('')
-    await callback.message.answer(f'Вы выбрали товар: {item_data.name}\nОписание: {item_data.description}\nЦена: {item_data.price}$')
+    await callback.message.answer(f'Вы выбрали товар: {item_data.name}\nОписание: {item_data.description}\nЦена: {item_data.price}$',
+                                  reply_markup=kb.add_basket)
+
+
+@router.callback_query(F.data == 'to_main')
+async def shop(callback: CallbackQuery):
+    await callback.answer('Вы перемещены на главную страницу')
+    await callback.message.answer('Что вам нужно?', reply_markup=kb.start)
+
+
+@router.message(F.text == 'Контакты')
+async def contacts(message: Message):
+    await message.answer('Кирилл Зайдаль', reply_markup=kb.contacts)
+
+
+@router.callback_query(F.data == 'add_basket')
+async def add_basket(callback: CallbackQuery):
+    await callback.answer('Товар добавлен в корзину')
+    item_name = callback.message.text.split('\n')[0].split(': ')[1]
+    await rq.add_basket(callback.from_user.id, item_name)
+
+
+@router.message(F.text == 'Корзина')
+async def basket(message: Message):
+    basket = await rq.get_basket(message.from_user.id)
+    items = []
+    for item in basket:
+        items.append([item.item])
+    await message.answer(tabulate(items, headers=['Название'], tablefmt='pretty'), reply_markup=kb.basket)
+
+
+@router.message(F.text == 'Проба')
+async def test(message: Message):
+    basket = await rq.get_basket(message.from_user.id)
+    item = await rq.get_item(basket.first().item)
+    message.answer(f'{item.name}: {item.price}$')

@@ -3,6 +3,10 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 from sqlalchemy.ext.asyncio import AsyncAttrs, async_sessionmaker, create_async_engine
 
 
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 engine = create_async_engine(url='sqlite+aiosqlite:///db.sqlite3')
 
 async_session = async_sessionmaker(engine)
@@ -34,6 +38,14 @@ class Item(Base):
     description: Mapped[str] = mapped_column(String(120))
     price: Mapped[int] = mapped_column()
     category: Mapped[int] = mapped_column(ForeignKey('categories.id'))
+
+
+class Basket(Base):
+    __tablename__ = 'basketss'
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user: Mapped[int] = mapped_column(ForeignKey('users.id'))
+    item: Mapped[str] = mapped_column()
 
 
 async def async_main():
