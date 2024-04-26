@@ -8,14 +8,14 @@ start = ReplyKeyboardMarkup(keyboard=[
     [KeyboardButton(text='Контакты'), KeyboardButton(text='Корзина')],
     [KeyboardButton(text='Создать')]
 
-], resize_keyboard=True)
+], resize_keyboard=True, one_time_keyboard=True)
 
 
 create = ReplyKeyboardMarkup(keyboard=[
     [KeyboardButton(text='Создать категорию'),
      KeyboardButton(text='Создать товар')]
 
-], resize_keyboard=True)
+], resize_keyboard=True, one_time_keyboard=True)
 
 
 async def categories():
